@@ -1,0 +1,47 @@
+name: Build and Deploy Lambda
+
+on: workflow_dispatch
+
+env:
+  AWS_REGION: "us-east-2"
+  S3_BUCKET: "artifact-bucket-431445718171-us-east-2-an"
+  LAMBDA_FUNCTION_NAME: "serverless_api"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies & Build
+        run: |
+          npm ci --production
+
+      - name: Package code into lambda.zip
+        run: |
+          zip -r lambda.zip . -x "*.git*" "*.github*" "terraform/*"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::431445718171:role/Lambda-zip
+          aws-region: us-east-2
+          audience: sts.amazonaws.com
+
+      - name: Verify AWS Identity
+        run: |
+          aws sts get-caller-identity
+
+      - name: Upload lambda.zip to S3
+        run: |
+          aws s3 cp lambda.zip s3://${{ env.S3_BUCKET }}/lambda.zip
+
+    
