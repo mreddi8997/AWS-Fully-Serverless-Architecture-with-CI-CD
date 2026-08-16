@@ -7,12 +7,17 @@ env:
   S3_BUCKET: "artifact-bucket-431445718171-us-east-2-an"
   LAMBDA_FUNCTION_NAME: "serverless_api"
 
+# Required for AWS OIDC role assumption
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -20,21 +25,22 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          cache-dependency-path: 'serverless-api/package-lock.json'
 
-      - name: Install dependencies & Build
-        working-directory: serverless-api\
-        run: |
-          npm ci --production
+      - name: Install dependencies
+        working-directory: serverless-api
+        run: npm ci --production
 
-      - name: Package code into lambda.zip
+      - name: Package Lambda ZIP
         run: |
-          zip -r lambda.zip . -x "*.git*" "*.github*" "terraform/*"
+          cd serverless-api
+          zip -r ../lambda.zip . -x "*.git*" "*.github*"
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::431445718171:role/Lambda-zip
-          aws-region: us-east-2
+          aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
 
       - name: Verify AWS Identity
@@ -44,5 +50,3 @@ jobs:
       - name: Upload lambda.zip to S3
         run: |
           aws s3 cp lambda.zip s3://${{ env.S3_BUCKET }}/lambda.zip
-
-    
