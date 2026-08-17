@@ -22,7 +22,7 @@ resource "aws_db_instance" "mysql-db" {
   username             = "admin"
   manage_master_user_password = true
   master_user_secret_kms_key_id = aws_kms_key.rds_kms_key.id
-  parameter_group_name = "default.mysql80"
+  parameter_group_name = "default.mysql8.0"
   skip_final_snapshot  = true
   storage_encrypted     = true
     vpc_security_group_ids = [aws_security_group.rds-sg.id]
