@@ -74,7 +74,7 @@ resource "aws_iam_policy" "lambda_rds_secret_policy" {
           "secretsmanager:GetSecretValue",
         ],
         Effect   = "Allow",
-        Resource = aws_db_instance.mysql-db.master_user_secret[0].arn
+        Resource = aws_db_instance.mysql-db.master_user_secret[0].secret_arn
       },
       {
         Effect = "Allow",
