@@ -7,7 +7,7 @@ resource "aws_vpc" "app_vpc" {
 resource "aws_subnet" "app_public_subnet_1" {
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = "10.0.1.0/24"
-  availability_zone = "us-east-1a"
+  availability_zone = "us-east-2a"
   map_public_ip_on_launch = true
     tags = {
         Name = "app-public-subnet-1"
@@ -17,7 +17,7 @@ resource "aws_subnet" "app_public_subnet_1" {
 resource "aws_subnet" "app_public_subnet_2" {
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-1b"
+  availability_zone = "us-east-2b"
   map_public_ip_on_launch = true
     tags = {
         Name = "app-public-subnet-2"
@@ -27,7 +27,7 @@ resource "aws_subnet" "app_public_subnet_2" {
 resource "aws_subnet" "app_private_subnet_1" {
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = "10.0.3.0/24"
-  availability_zone = "us-east-1a"
+  availability_zone = "us-east-2a"
     tags = {
         Name = "app-private-subnet-1"
     }
@@ -35,7 +35,7 @@ resource "aws_subnet" "app_private_subnet_1" {
 resource "aws_subnet" "app_private_subnet_2" {
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = "10.0.4.0/24"
-  availability_zone = "us-east-1b"
+  availability_zone = "us-east-2b"
     tags = {
         Name = "app-private-subnet-2"
     }
@@ -44,7 +44,7 @@ resource "aws_subnet" "app_private_subnet_2" {
 resource "aws_subnet" "app_database_subnet_1" {
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = "10.0.5.0/24"
-   availability_zone = "us-east-1a"
+   availability_zone = "us-east-2a"
      tags = {
             Name = "app-database-subnet-1"
         }
@@ -53,7 +53,7 @@ resource "aws_subnet" "app_database_subnet_1" {
 resource "aws_subnet" "app_database_subnet_2" {
   vpc_id            = aws_vpc.app_vpc.id
   cidr_block        = "10.0.6.0/24" 
-  availability_zone = "us-east-1b"
+  availability_zone = "us-east-2b"
     tags = {
         Name = "app-database-subnet-2"
     }
@@ -128,4 +128,22 @@ resource "aws_route_table_association" "app_private_rt_assoc_1" {
 resource "aws_route_table_association" "app_private_rt_assoc_2" {
   subnet_id      = aws_subnet.app_private_subnet_2.id
   route_table_id = aws_route_table.app_private_rt.id
+}
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id       = aws_vpc.app_vpc.id
+  service_name = "com.amazonaws.us-east-2.s3"
+  route_table_ids = [aws_route_table.app_private_rt.id] 
+}
+
+resource "aws_vpc_endpoint" "secretsmanager" {
+  vpc_id       = aws_vpc.app_vpc.id
+  service_name = "com.amazonaws.us-east-2.secretsmanager"
+  vpc_endpoint_type = "Interface"
+
+  security_group_ids = [aws_security_group.endpoint_sg.id]
+
+  subnet_ids = [aws_subnet.app_private_subnet_1.id,aws_subnet.app_private_subnet_2.id]
+
+    private_dns_enabled = true
 }
